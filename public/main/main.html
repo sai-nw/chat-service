@@ -1,0 +1,160 @@
+<html ng-app="title">
+<div class="jumbotron">
+  <h2> Welcome <b>{{myNickname}}</b></h2>,
+  <p>Send Messages and Likes below
+  </p>
+</div>
+<br>
+<div class="row">
+  <div class="col-md-4">
+    <small class="marker">Friend List</small>
+    <ul class="list-unstyled">
+      <li class="user" ng-repeat="user in users track by $index">
+        <span class='label btn-mini label-default userlabel'>
+          <i class='fa fa-user'></i> {{user.name}}
+        </span>
+        <span ng-if="(user.unreadMessageCount)" class='label btn-mini label-danger userlabel'>
+          {{user.unreadMessageCount}}
+        </span>
+
+        &nbsp;
+        &nbsp;
+        <input type="radio" name="username" ng-click="checkTo(user)">Chat<br>
+      </li>
+    </ul>
+  </div>
+
+  <!-- <div class="col-md-1">
+    <small class="marker">Total Messages</small>
+    <ul class="list-unstyled">
+      <li class="user" ng-repeat="messageCount in messageCountList track by $index">
+        <span class='label btn-mini label-default userlabel'>
+          <i class='fa fa-comment'></i> {{messageCount}}
+        </span>
+      </li>
+    </ul>
+  </div> -->
+
+  <div class="col-md-7">
+    <div class="card">
+
+      <div class="card-body msg_card_body">
+        <span ng-if="(activeStatusInfo.lastActiveAt == null)" class='label btn-mini label-success userlabel'>Active
+          Now</span>
+
+
+        <div ng-if="(activeStatusInfo.lastActiveAt != null) && (activeStatusInfo.days != 0)">
+
+          <span class='label btn-mini label-success userlabel' ng-if="(activeStatusInfo.days > 1 )">
+            {{activeStatusInfo.days}} days ago</span>
+
+          <span class='label btn-mini label-success userlabel' ng-if="(activeStatusInfo.days == 1 )">
+            {{activeStatusInfo.days}} day ago</span>
+
+
+        </div>
+
+        <div
+          ng-if="(activeStatusInfo.lastActiveAt != null) && (activeStatusInfo.hours != 0 && activeStatusInfo.days == 0)">
+
+          <span class='label btn-mini label-success userlabel' ng-if="(activeStatusInfo.hours > 1 )">
+            {{activeStatusInfo.hours}} hours ago</span>
+
+          <span class='label btn-mini label-success userlabel' ng-if="(activeStatusInfo.hours == 1 )">
+            {{activeStatusInfo.hours}} hour ago</span>
+
+
+        </div>
+
+        <div
+          ng-if="(activeStatusInfo.lastActiveAt != null) && ( activeStatusInfo.hours == 0 && activeStatusInfo.days == 0)">
+          <span class='label btn-mini label-success userlabel'
+            ng-if="(activeStatusInfo.minutes > 1 )">{{activeStatusInfo.minutes}} minutes ago
+          </span>
+          <span class='label btn-mini label-success userlabel'
+            ng-if="(activeStatusInfo.minutes == 1 )">{{activeStatusInfo.minutes}} minute ago
+          </span>
+          <span class='label btn-mini label-success userlabel' ng-if="(activeStatusInfo.minutes == 0 )">a few minute ago
+          </span>
+
+        </div>
+
+
+        <hr>
+        <font color='red'>{{counter}}</font>
+        <button ng-click="startAutoSend()" class='input-sm btn btn-default'>Start Auto Send</button>
+        <button ng-click="stopAutoSend()" class='input-sm btn btn-default'>Stop</button>
+        <button ng-click="resetAutoSendCounter()" class='input-sm btn btn-default'>Reset Counter</button>
+        <hr>
+
+        <div class='well chatbox' id='chat_history' ng-if="!firstConversationStatus.firstConversationStatus">
+
+          <button ng-click="loadMore()">Load more</button>
+          <ul class='list-unstyled'>
+            <li ng-repeat='m in messages'>
+              <div ng-if="!m.removedStatus">
+                <p> 
+                  <i class='fa fa-comment'></i>
+                  &nbsp;
+                  {{m.message}}<br>
+                  <span ng-if="m.image"><img ng-src=" {{m.image}}" style="width:30px;"><br></span>
+                  <i class="fa fa-clock-o" aria-hidden="true"></i>&nbsp;<span ng-bind="m.messageAt"></span>
+                  &nbsp;
+                  <br>
+                  <span ng-if="(m.senderId == myId)">
+                    <a ng-click="removedMessage(m)" style="color: rgb(250, 117, 117);cursor: pointer;"><i class="fa fa-trash"></i>&nbsp;Remove</a> 
+                  </span>
+                </p>
+                <span ng-class="{ 'fa fa-info-circle text-danger': m.sent === false }"></span>
+
+                <p href ng-if="(m.read == true && m.receiverId != myId)" class="pull-right">read</p>
+              </div>
+            </li>
+            <span id='typing' class='typing'></span>
+            <br>
+          </ul>
+        </div>
+
+        <div class='well chatbox' id='chat_history' ng-if="firstConversationStatus.firstConversationStatus">
+          <span>Say Hello</span>
+          <span id='typing' class='typing'></span>
+        </div>
+      </div>
+      <div class="card-footer" ng-if="!firstConversationStatus.blockStatus">
+        <form ng-submit='sendMessage()'>
+          <input ng-model='receiverName' type='hidden' value="{{ receiverName}}">
+          <input ng-model='receiverId' type='hidden' value="{{ receiverId}}">
+
+          <div class='input-group'>
+            <input class='input-sm form-control' ng-model='$parent.message' type='text' placeholder="Type a message..."
+              ng-keypress="keyPress($event)" ng-keydown="keydown()" ng-blur="blur()">
+            <span class='input-group-btn' ng-if="!firstConversationStatus.blockStatus">
+              <input class='input-sm btn btn-default' type='submit' value='Send'>
+            </span>
+
+          </div>
+          <div>
+            <label for="uploadfile">
+              Image
+              <input type="file" ng-model='image' accept="image/*"
+                onchange="angular.element(this).scope().uploadedFile(this)" />
+            </label>
+            <img ng-show="image_source!= null" ng-src="{{image_source}}" style="width:100px;">
+
+          </div>
+        </form>
+
+        <button ng-click="blockTo()" class='input-sm btn btn-danger'>Block</button>
+
+      </div>
+      <span ng-if="(firstConversationStatus.blockStatus)">Blocked</span>
+      <div class=" card-footer"
+        ng-if="(firstConversationStatus.blockStatus) && (firstConversationStatus.blockBy == myId)">
+
+
+        <button ng-click="unBlockTo()" class='input-sm btn btn-info'>Unblock</button>
+
+      </div>
+    </div>
+  </div>
+</div>
